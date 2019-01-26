@@ -1,0 +1,16 @@
+dist: trusty
+
+language: node_js
+
+node_js:
+  - lts/*
+
+install:
+  - curl -O https://download.clojure.org/install/linux-install-1.10.0.411.sh
+  - chmod +x linux-install-1.10.0.411.sh
+  - sudo ./linux-install-1.10.0.411.sh
+
+script:
+  - if [[ $CANARY_CLOJURESCRIPT_REPO && ${CANARY_CLOJURESCRIPT_REPO-x} ]]; then DEPS="{:paths [\"src/main/cljs\"] :deps {org.clojure/clojurescript {:git/url \"${CANARY_CLOJURESCRIPT_REPO}\" :sha \"${CANARY_CLOJURESCRIPT_REV}\"}}}"; fi
+  - clojure -Sdeps "${DEPS:-{:paths [\"src/main/cljs\"] :deps {org.clojure/clojurescript {:mvn/version \"1.10.439\"}}}}" -m cljs.main -re node -e '(set! js/print (fn [& args] (.apply (.-log js/console) js/console (into-array args))))' src/test/cljs/clojure/core/rrb_vector_test.cljs | tee test-out.txt
+  - grep 'Tests completed without exception.' test-out.txt
